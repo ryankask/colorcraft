@@ -6,5 +6,5 @@ if [ "$FLASK_ENV" = "development" ]; then
     exec python -m colorcraft.web_app
 else
     echo "Starting in production mode with Gunicorn..."
-    exec gunicorn --bind 0.0.0.0:5000 --workers 4 colorcraft.web_app:app
+    exec gunicorn --bind 0.0.0.0:5000 --workers 2 --timeout 60 colorcraft.web_app:app
 fi
