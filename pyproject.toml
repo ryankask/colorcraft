@@ -1,7 +1,14 @@
 [project]
 name = "colorcraft"
 version = "0.1.0"
-description = "Add your description here"
+description = "A CLI tool for generating coloring pages using AI"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "requests>=2.31.0",
+    "Pillow>=10.0.0",
+    "reportlab>=4.0.0",
+    "click>=8.1.0",
+    "flask>=2.3.0",
+    "gunicorn>=21.0.0"
+]

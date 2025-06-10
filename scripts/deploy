@@ -1,0 +1,16 @@
+#!/usr/bin/env zsh
+
+set -euo pipefail
+
+REGISTRY=zot.app.kaskel.net
+PROJECT=colorcraft
+REPO=colorcraft
+TAG=latest
+IMAGE=$REGISTRY/$REPO/web:$TAG
+DEPLOYMENT=colorcraft
+
+cd ~/projects/$PROJECT
+git pull
+docker build -t $IMAGE .
+docker push $IMAGE
+sudo kubectl rollout restart deployment $DEPLOYMENT --namespace=default

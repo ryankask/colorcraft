@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColorCraft</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('generatorForm');
+            const btn = document.getElementById('generateBtn');
+            const btnText = btn.querySelector('.btn-text');
+            const btnLoading = btn.querySelector('.btn-loading');
+            const messagesDiv = document.querySelector('.messages');
+            
+            function resetButton() {
+                btn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
+            }
+            
+            function showError(message) {
+                if (messagesDiv) {
+                    messagesDiv.innerHTML = `<div class="message error">${message}</div>`;
+                } else {
+                    // Create messages div if it doesn't exist
+                    const container = document.querySelector('.container main');
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'messages';
+                    errorDiv.innerHTML = `<div class="message error">${message}</div>`;
+                    container.insertBefore(errorDiv, form);
+                }
+            }
+            
+            function clearMessages() {
+                if (messagesDiv) {
+                    messagesDiv.innerHTML = '';
+                }
+            }
+            
+            function downloadPDF(base64Data, filename) {
+                // Convert base64 to blob
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const prompt = document.getElementById('prompt').value.trim();
+                if (!prompt) {
+                    showError('Please enter a prompt for your coloring page.');
+                    return;
+                }
+                
+                // Clear any previous messages
+                clearMessages();
+                
+                // Show loading state
+                btn.disabled = true;
+                btnText.style.display = 'none';
+                btnLoading.style.display = 'flex';
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('prompt', prompt);
+                    
+                    const response = await fetch('{{ url_for("generate") }}', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        downloadPDF(data.pdf_data, data.filename);
+                    } else {
+                        showError(data.error || 'An error occurred while generating the coloring page.');
+                    }
+                } catch (error) {
+                    showError('Network error. Please check your connection and try again.');
+                } finally {
+                    resetButton();
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 ColorCraft</h1>
+            <p>Create beautiful coloring pages from your imagination</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <main>
+            <form class="generator-form" id="generatorForm">
+                <div class="form-group">
+                    <label for="prompt">Describe your coloring page:</label>
+                    <textarea 
+                        id="prompt" 
+                        name="prompt" 
+                        placeholder="e.g., A friendly dragon playing in a garden with flowers and butterflies"
+                        required
+                    ></textarea>
+                </div>
+                
+                <button type="submit" class="generate-btn" id="generateBtn">
+                    <span class="btn-text">Generate PDF Coloring Page</span>
+                    <span class="btn-loading" style="display: none;">
+                        <span class="spinner"></span>
+                        Generating...
+                    </span>
+                </button>
+            </form>
+        </main>
+
+        <footer>
+            <p>Powered by OpenAI • Generate unique coloring pages instantly</p>
+        </footer>
+    </div>
+</body>
+</html>
