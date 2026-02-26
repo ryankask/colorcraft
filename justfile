@@ -11,10 +11,10 @@ cli prompt output="coloring_page" format="png":
     uv run python -m colorcraft "{{prompt}}" --output {{output}} --format {{format}}
 
 web:
-    uv run python app.py
+    uv run python -m colorcraft.web_app
 
 web-dev:
-    FLASK_DEBUG=true uv run python app.py
+    FLASK_DEBUG=true uv run python -m colorcraft.web_app
 
 docker-build:
     docker build -t colorcraft .
