@@ -5,10 +5,13 @@ install:
     uv sync
 
 cli-demo:
-    uv run python -m colorcraft "a friendly dragon playing in a garden"
+    uv run python -m colorcraft --prompt "a friendly dragon playing in a garden"
 
 cli prompt output="coloring_page" format="png":
-    uv run python -m colorcraft "{{prompt}}" --output {{output}} --format {{format}}
+    uv run python -m colorcraft --prompt "{{prompt}}" --output {{output}} --format {{format}}
+
+cli-image image prompt="" output="coloring_page" format="png":
+    uv run python -m colorcraft --image {{image}} {{ if prompt != "" { "--prompt \"" + prompt + "\"" } else { "" } }} --output {{output}} --format {{format}}
 
 web:
     uv run python -m colorcraft.web_app
@@ -38,10 +41,10 @@ docker-clean:
     docker rmi zot.app.kaskel.net/colorcraft/web:latest || true
 
 sample-pdf:
-    uv run python -m colorcraft "a magical castle with towers and flags" --format pdf --output sample_castle
+    uv run python -m colorcraft --prompt "a magical castle with towers and flags" --format pdf --output sample_castle
 
 sample-png:
-    uv run python -m colorcraft "a cute puppy playing with a ball" --format png --output sample_puppy
+    uv run python -m colorcraft --prompt "a cute puppy playing with a ball" --format png --output sample_puppy
 
 check-api-key:
     @if [ -z "${OPENAI_API_KEY}" ]; then echo "❌ OPENAI_API_KEY environment variable is not set"; exit 1; else echo "✅ OPENAI_API_KEY is set"; fi

@@ -23,3 +23,12 @@ class ColoringPageGenerator:
             return self.processor.save_as_pdf(processed_image, output_filename)
         else:  # default to PNG
             return self.processor.save_as_png(processed_image, output_filename)
+
+    def generate_from_image(self, image_data: bytes, adaptation: str, output_filename: str, output_format: str) -> str:
+        edited_image_data = self.client.edit_coloring_page(image_data, adaptation)
+        processed_image = self.processor.process_for_coloring_page(edited_image_data)
+
+        if output_format.lower() == 'pdf':
+            return self.processor.save_as_pdf(processed_image, output_filename)
+        else:
+            return self.processor.save_as_png(processed_image, output_filename)
