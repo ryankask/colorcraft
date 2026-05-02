@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+FROM ghcr.io/astral-sh/uv:python3.14-trixie-slim
 
 WORKDIR /app
 
@@ -20,11 +20,9 @@ ENTRYPOINT []
 
 EXPOSE 5000
 
-# Copy and set up entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Set default environment to production
 ENV FLASK_ENV=production
 
 CMD ["docker-entrypoint.sh"]

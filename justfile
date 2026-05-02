@@ -19,26 +19,26 @@ web:
 web-dev:
     FLASK_DEBUG=true uv run python -m colorcraft.web_app
 
-docker-build:
-    docker build -t colorcraft .
+podman-build:
+    podman build -t colorcraft .
 
-docker-build-registry:
-    docker build -t zot.app.kaskel.net/colorcraft/web:latest .
+podman-build-registry:
+    podman build -t zot.app.kaskel.net/colorcraft/web:latest .
 
-docker-run:
-    docker run -p 5000:5000 -e OPENAI_API_KEY="${OPENAI_API_KEY}" colorcraft
+podman-run:
+    podman run -p 5000:5000 -e OPENAI_API_KEY="${OPENAI_API_KEY}" colorcraft
 
-docker-run-registry:
-    docker run -p 5000:5000 -e OPENAI_API_KEY="${OPENAI_API_KEY}" zot.app.kaskel.net/colorcraft/web:latest
+podman-run-registry:
+    podman run -p 5000:5000 -e OPENAI_API_KEY="${OPENAI_API_KEY}" zot.app.kaskel.net/colorcraft/web:latest
 
-docker-push:
-    docker push zot.app.kaskel.net/colorcraft/web:latest
+podman-push:
+    podman push zot.app.kaskel.net/colorcraft/web:latest
 
-docker-deploy: docker-build-registry docker-push
+podman-deploy: podman-build-registry podman-push
 
-docker-clean:
-    docker rmi colorcraft || true
-    docker rmi zot.app.kaskel.net/colorcraft/web:latest || true
+podman-clean:
+    podman rmi colorcraft || true
+    podman rmi zot.app.kaskel.net/colorcraft/web:latest || true
 
 sample-pdf:
     uv run python -m colorcraft --prompt "a magical castle with towers and flags" --format pdf --output sample_castle

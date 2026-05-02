@@ -24,16 +24,16 @@ uv sync
 export OPENAI_API_KEY="your-openai-api-key"
 ```
 
-### Running with Docker
+### Running with Podman
 
-Build and run the web application using Docker:
+Build and run the web application using Podman:
 
 ```bash
-# Build the Docker image
-docker build -t colorcraft .
+# Build the container image
+podman build -t colorcraft .
 
 # Run the web application
-docker run -p 5000:5000 -e OPENAI_API_KEY="your-openai-api-key" colorcraft
+podman run -p 5000:5000 -e OPENAI_API_KEY="your-openai-api-key" colorcraft
 ```
 
 The web interface will be available at http://localhost:5000
@@ -42,7 +42,7 @@ You can also customize the configuration:
 
 ```bash
 # Run with custom port and debug mode
-docker run -p 8080:8080 \
+  podman run -p 8080:8080 \
   -e OPENAI_API_KEY="your-openai-api-key" \
   -e FLASK_PORT=8080 \
   -e FLASK_DEBUG=true \
