@@ -7,39 +7,65 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('generatorForm');
-            const btn = document.getElementById('generateBtn');
-            const btnText = btn.querySelector('.btn-text');
-            const btnLoading = btn.querySelector('.btn-loading');
+            const tabDescribe = document.getElementById('tabDescribe');
+            const tabPicture = document.getElementById('tabPicture');
+            const panelDescribe = document.getElementById('panelDescribe');
+            const panelPicture = document.getElementById('panelPicture');
+
+            const formDescribe = document.getElementById('describeForm');
+            const formPicture = document.getElementById('pictureForm');
+            const btnDescribe = document.getElementById('describeBtn');
+            const btnPicture = document.getElementById('pictureBtn');
             const messagesDiv = document.querySelector('.messages');
-            
-            function resetButton() {
+
+            const imageDropZone = document.getElementById('imageDropZone');
+            const fileInput = document.getElementById('imageFile');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            const removeImageBtn = document.getElementById('removeImage');
+            const adaptationField = document.getElementById('adaptation');
+
+            let currentImageData = null;
+
+            function switchTab(tab) {
+                if (tab === 'describe') {
+                    tabDescribe.classList.add('active');
+                    tabPicture.classList.remove('active');
+                    panelDescribe.style.display = 'block';
+                    panelPicture.style.display = 'none';
+                } else {
+                    tabPicture.classList.add('active');
+                    tabDescribe.classList.remove('active');
+                    panelDescribe.style.display = 'none';
+                    panelPicture.style.display = 'block';
+                }
+                clearMessages();
+            }
+
+            tabDescribe.addEventListener('click', function() { switchTab('describe'); });
+            tabPicture.addEventListener('click', function() { switchTab('picture'); });
+
+            function resetButton(btn) {
+                const btnText = btn.querySelector('.btn-text');
+                const btnLoading = btn.querySelector('.btn-loading');
                 btn.disabled = false;
                 btnText.style.display = 'inline';
                 btnLoading.style.display = 'none';
             }
-            
+
             function showError(message) {
                 if (messagesDiv) {
-                    messagesDiv.innerHTML = `<div class="message error">${message}</div>`;
-                } else {
-                    // Create messages div if it doesn't exist
-                    const container = document.querySelector('.container main');
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'messages';
-                    errorDiv.innerHTML = `<div class="message error">${message}</div>`;
-                    container.insertBefore(errorDiv, form);
+                    messagesDiv.innerHTML = '<div class="message error">' + message + '</div>';
                 }
             }
-            
+
             function clearMessages() {
                 if (messagesDiv) {
                     messagesDiv.innerHTML = '';
                 }
             }
-            
+
             function downloadPDF(base64Data, filename) {
-                // Convert base64 to blob
                 const byteCharacters = atob(base64Data);
                 const byteNumbers = new Array(byteCharacters.length);
                 for (let i = 0; i < byteCharacters.length; i++) {
@@ -47,8 +73,6 @@
                 }
                 const byteArray = new Uint8Array(byteNumbers);
                 const blob = new Blob([byteArray], { type: 'application/pdf' });
-                
-                // Create download link
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
@@ -59,35 +83,105 @@
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
             }
-            
-            form.addEventListener('submit', async function(e) {
+
+            function setImage(file) {
+                if (!file || !file.type.startsWith('image/')) return;
+
+                const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+                if (!allowed.includes(file.type)) {
+                    showError('Please use a JPG, PNG, WebP, or HEIC image.');
+                    return;
+                }
+
+                currentImageData = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    imageDropZone.style.display = 'none';
+                    clearMessages();
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function clearImage() {
+                currentImageData = null;
+                previewImg.src = '';
+                imagePreview.style.display = 'none';
+                imageDropZone.style.display = 'flex';
+                fileInput.value = '';
+            }
+
+            removeImageBtn.addEventListener('click', clearImage);
+
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    setImage(this.files[0]);
+                }
+            });
+
+            imageDropZone.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            imageDropZone.addEventListener('dragover', function(e) {
                 e.preventDefault();
-                
+                imageDropZone.classList.add('dragover');
+            });
+
+            imageDropZone.addEventListener('dragleave', function() {
+                imageDropZone.classList.remove('dragover');
+            });
+
+            imageDropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                imageDropZone.classList.remove('dragover');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    setImage(e.dataTransfer.files[0]);
+                }
+            });
+
+            document.addEventListener('paste', function(e) {
+                if (panelPicture.style.display === 'none') return;
+
+                const items = e.clipboardData && e.clipboardData.items;
+                if (!items) return;
+
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        e.preventDefault();
+                        const file = items[i].getAsFile();
+                        setImage(file);
+                        return;
+                    }
+                }
+            });
+
+            formDescribe.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
                 const prompt = document.getElementById('prompt').value.trim();
                 if (!prompt) {
                     showError('Please enter a prompt for your coloring page.');
                     return;
                 }
-                
-                // Clear any previous messages
+
                 clearMessages();
-                
-                // Show loading state
-                btn.disabled = true;
-                btnText.style.display = 'none';
-                btnLoading.style.display = 'flex';
-                
+                btnDescribe.disabled = true;
+                btnDescribe.querySelector('.btn-text').style.display = 'none';
+                btnDescribe.querySelector('.btn-loading').style.display = 'flex';
+
                 try {
                     const formData = new FormData();
                     formData.append('prompt', prompt);
-                    
+
                     const response = await fetch('{{ url_for("generate") }}', {
                         method: 'POST',
                         body: formData
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         downloadPDF(data.pdf_data, data.filename);
                     } else {
@@ -96,7 +190,44 @@
                 } catch (error) {
                     showError('Network error. Please check your connection and try again.');
                 } finally {
-                    resetButton();
+                    resetButton(btnDescribe);
+                }
+            });
+
+            formPicture.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (!currentImageData) {
+                    showError('Please add an image first.');
+                    return;
+                }
+
+                clearMessages();
+                btnPicture.disabled = true;
+                btnPicture.querySelector('.btn-text').style.display = 'none';
+                btnPicture.querySelector('.btn-loading').style.display = 'flex';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('image', currentImageData);
+                    formData.append('adaptation', adaptationField.value.trim());
+
+                    const response = await fetch('{{ url_for("generate_from_image") }}', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        downloadPDF(data.pdf_data, data.filename);
+                    } else {
+                        showError(data.error || 'An error occurred while generating the coloring page.');
+                    }
+                } catch (error) {
+                    showError('Network error. Please check your connection and try again.');
+                } finally {
+                    resetButton(btnPicture);
                 }
             });
         });
@@ -119,26 +250,70 @@
             {% endif %}
         {% endwith %}
 
+        <div class="messages"></div>
+
         <main>
-            <form class="generator-form" id="generatorForm">
-                <div class="form-group">
-                    <label for="prompt">Describe your coloring page:</label>
-                    <textarea 
-                        id="prompt" 
-                        name="prompt" 
-                        placeholder="e.g., A friendly dragon playing in a garden with flowers and butterflies"
-                        required
-                    ></textarea>
-                </div>
-                
-                <button type="submit" class="generate-btn" id="generateBtn">
-                    <span class="btn-text">Generate PDF Coloring Page</span>
-                    <span class="btn-loading" style="display: none;">
-                        <span class="spinner"></span>
-                        Generating...
-                    </span>
-                </button>
-            </form>
+            <div class="tabs">
+                <button class="tab active" id="tabDescribe">Describe it</button>
+                <button class="tab" id="tabPicture">Use a picture</button>
+            </div>
+
+            <div id="panelDescribe">
+                <form class="generator-form" id="describeForm">
+                    <div class="form-group">
+                        <label for="prompt">Describe your coloring page:</label>
+                        <textarea
+                            id="prompt"
+                            name="prompt"
+                            placeholder="e.g., A friendly dragon playing in a garden with flowers and butterflies"
+                        ></textarea>
+                    </div>
+
+                    <button type="submit" class="generate-btn" id="describeBtn">
+                        <span class="btn-text">Generate PDF Coloring Page</span>
+                        <span class="btn-loading" style="display: none;">
+                            <span class="spinner"></span>
+                            Generating...
+                        </span>
+                    </button>
+                </form>
+            </div>
+
+            <div id="panelPicture" style="display: none;">
+                <form class="generator-form" id="pictureForm">
+                    <div class="form-group">
+                        <label>Add a reference image:</label>
+                        <div class="image-drop-zone" id="imageDropZone">
+                            <div class="drop-zone-content">
+                                <span class="drop-icon">📷</span>
+                                <p>Click to browse, drag & drop, or paste an image</p>
+                            </div>
+                        </div>
+                        <input type="file" id="imageFile" name="image" accept="image/jpeg,image/png,image/webp" style="display: none;">
+                        <div class="image-preview" id="imagePreview" style="display: none;">
+                            <img id="previewImg" src="" alt="Preview">
+                            <button type="button" class="remove-image" id="removeImage" title="Remove image">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adaptation">Adapt it (optional):</label>
+                        <textarea
+                            id="adaptation"
+                            name="adaptation"
+                            placeholder="e.g., Simplify for younger kids, show from the side, add a background"
+                        ></textarea>
+                    </div>
+
+                    <button type="submit" class="generate-btn" id="pictureBtn">
+                        <span class="btn-text">Generate PDF Coloring Page</span>
+                        <span class="btn-loading" style="display: none;">
+                            <span class="spinner"></span>
+                            Generating...
+                        </span>
+                    </button>
+                </form>
+            </div>
         </main>
 
         <footer>
